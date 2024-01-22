@@ -2,6 +2,7 @@ import re
 import json
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import pandas as pd
 
 import pymongo
 
@@ -88,7 +89,7 @@ def convert_pdf_to_txt(pdf_file):
     return text
 
 def course_recommender(course_list):
-    st.subheader("\n\n**Courses & Certificates Recommendations 👨‍🎓**")
+    st.markdown('''<h4 style='text-align:center;margin-bottom:20px;font-family:Bungee;font-style:underline; margin-top:30px; font-size:50px; color: #080506; background-color:#a99a86;letter-spacing:5px'>Courses & Certificates Recommendations ''',unsafe_allow_html=True)
     c = 0
     rec_course = []
     ## slider to choose from range 1-10
@@ -176,16 +177,36 @@ def NormalUser():
             resume_data = ResumeParser(pdf_file).get_extracted_data()
             try:
                 st.header("\n\n")
-                st.header("\n\n** ------------ Resume Analysis ------------✉️ **\n")
+            #    st.title("\n\n** -------  Resume Analysis  -------✉️**\n")
+                st.markdown('''<h4 style='padding:10px;text-align:center;margin-bottom:20px;font-family:Fantasy;font-style:underline; margin-top:30px; font-size:50px; color: #771414; background-color:#d5d3d3;letter-spacing:5px'>-------  Resume Analysis ✉️  ------- ''',unsafe_allow_html=True)
+
                 st.text("\n")
-                st.success("\nHello "+ resume_data['name']+"\n")
-                st.subheader("**Your Basic info 📋**")
+                st.success("\nDear "+" "+resume_data['name']+" !! Welcome to WSH Resume Analyzer 🙂"+"\n")
+                # st.header("**Your Basic info 📋**")
                 
-                st.text('Name: '+resume_data['name'])
-                st.text('Email: ' + resume_data['email'])
-                st.text('Contact: ' + resume_data['mobile_number'])
-                st.text('Skills: '+resume_data['skills'])
-           #     print(resume_data['skills'])
+                # st.text('Name: '+resume_data['name'])
+                # st.text('Email: ' + resume_data['email'])
+                # st.text('Contact: ' + resume_data['mobile_number'])
+                # st.text('Skills: '+resume_data['skills'])
+                
+                st.header("**Your Basic info 📋**")
+
+                # Assuming resume_data is a dictionary with keys 'name', 'email', 'mobile_number', 'total_experience'
+                table_data = {
+                    'Attributes': ['Name', 'Email', 'Contact', 'Experience'],
+                    'Details': [resume_data['name'], resume_data['email'], resume_data['mobile_number'], resume_data['total_experience']]
+                }
+                
+                # Create a Markdown table
+                markdown_table = "| Attributes | Details |\n| --- | --- |\n"
+                for attribute, detail in zip(table_data['Attributes'], table_data['Details']):
+                    markdown_table += f"| {attribute} | {detail} |\n"
+                
+                # Display the Markdown table using st.write
+                st.write(markdown_table, unsafe_allow_html=True)
+                           #     print(resume_data['skills'])
+           
+             #   st.text('Skills: '+resume_data['skills'])
             except:
                 pass
                 
@@ -200,8 +221,14 @@ def NormalUser():
                 pass
                 
             try:
-                st.text('Year of Experience: ' + str(resume_data['total_experience']))
-                st.text("Designition" + str(resume_data["designition"]))
+              
+              #  st.table(table_data, columns=column_names)
+              #  st.text('Year of Experience: ' + str(resume_data['total_experience']))
+               # st.text("Designition" + str(resume_data["designition"]))
+               
+               st.success(f"\n\nDesignition: {resume_data['designition']}")
+              # st.markdown(f"Designition: {resume_data['designition']}")
+
             except:
                 pass
                     
@@ -211,27 +238,29 @@ def NormalUser():
             cand_level = ''
             if resume_data['no_of_pages'] < 1:                
                 cand_level = "NA"
-                st.markdown( '''<h4 style='text-align: left; color: #d73b5c;'>You are at Fresher level!</h4>''',unsafe_allow_html=True)
+                st.markdown( '''<h4 style='text-align:center; margin-top:20px; color: #080506; background-color:#e1dddf;letter-spacing:3px'>You are at Fresher level!</h4>''',unsafe_allow_html=True)
                 
                 #### if internship then intermediate level
                     
             elif internship_pattern.search(resume_text):
                 cand_level = "Intermediate"
-                st.markdown('''<h4 style='text-align: left; color: #1ed760;'>You are at intermediate level!</h4>''', unsafe_allow_html=True)
+                st.markdown('''<h4 style='text-align:center; margin-top:20px; color: #080506; background-color:#e1dddf;letter-spacing:3px'>You are at intermediate level!</h4>''', unsafe_allow_html=True)
 
             # Check for work experience using regular expression
             
             elif experience_pattern.search(resume_text):
                 cand_level = "Experienced"
-                st.markdown('''<h4 style='text-align: left; color: #fba171;'>You are at experience level!</h4>''', unsafe_allow_html=True)
+                st.markdown('''<h4 style='text-align:center; margin-top:20px; color: #080506; background-color:#e1dddf;letter-spacing:3px'>You are at experience level!</h4>''', unsafe_allow_html=True)
             
             else:
                 cand_level = "Fresher"
-                st.markdown('''<h4 style='text-align: left; color: #fba171;'>You are at Fresher level!!''',unsafe_allow_html=True)
+                st.markdown('''<h4 style='text-align:center; margin-top:20px; color: #080506; background-color:#e1dddf;letter-spacing:3px'>You are at Fresher level!!''',unsafe_allow_html=True)
                 
          
                  ## Skills Analyzing and Recommendation
-            st.subheader("**Skills Recommendation 📓**")
+          
+            st.markdown('''<h4 style='text-align:center;margin-bottom:20px;font-family:Bungee;font-style:underline; margin-top:30px; font-size:50px; color: #080506; background-color:#a99a86;letter-spacing:5px'>Skills Evaluation ''',unsafe_allow_html=True)     
+           
 
             keywords = st_tags(label='### Your Current Skills',
             text='See our skills recommendation below',value=resume_data['skills'],key='1')
@@ -538,14 +567,17 @@ def NormalUser():
                 #     video_url = f'{video_id}'
                 #     st.video(video_url, width=500, height=400)
                     
-                st.subheader("\n\nResume Videos Links ▶")
+
+                st.markdown('''<h4 style='text-align:center;margin-bottom:20px;font-family:Bungee;font-style:underline; margin-top:30px; font-size:50px; color: #080506; background-color:#a99a86;letter-spacing:5px'>Resume Betterment Videos Links ▶''',unsafe_allow_html=True)
+                
                 for link in random_resume_links:
                     st.markdown(f'<br><iframe width="560" height="315" src="{link}" frameborder="0" allowfullscreen></iframe>', unsafe_allow_html=True)
                 
                 
-                st.subheader("\n\nInterview Videos Links ▶")
+             
+                st.markdown('''<h4 style='text-align:center;margin-bottom:20px;font-family:Bungee;font-style:underline; margin-top:30px; font-size:50px; color: #080506; background-color:#a99a86;letter-spacing:5px'>Interview Perperation Videos Links  ▶''',unsafe_allow_html=True)
                 for link in random_interview_links:
-                    st.markdown(f'<iframe width="560" height="315" src="{link}" frameborder="0" allowfullscreen></iframe>', unsafe_allow_html=True)
+                    st.markdown(f'<iframe width="560" height="315" src="{link}" frameborder="0" allowfullscreen style="margin-top:20px"></iframe>', unsafe_allow_html=True)
                 
                 # st.subheader("Resume Betterment Videos   ▶ ")
                 # for linkss in random_resume_links:
@@ -567,7 +599,9 @@ def NormalUser():
                       
                 
             # Resume Scorer & Resume Writing Tips
-            st.subheader("\n\nResume Tips & Ideas  📝")
+            st.subheader("\n\n")
+            st.markdown('''<h4 style='text-align:center;padding:5px; margin-bottom:20px;font-family:Bungee;font-style:underline; margin-top:30px; font-size:50px; color: #080506; background-color:#a99a86;letter-spacing:5px'>Resume Modifications Techniques (Tips & Ideas)  📝''',unsafe_allow_html=True)
+          
             resume_score = 0
                 
                 ### Predicting Whether these key points are added to the resume
@@ -643,7 +677,12 @@ def NormalUser():
                 st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Summary/Objective</h4>''',unsafe_allow_html=True)
             else:
                 st.markdown('''<h5 style='text-align: left; color: #fabc10;'>[-] Please add Leadership/Volunteer. It will show your Leadership & Managnement skiils to the comapny.</h4>''',unsafe_allow_html=True)
-            st.subheader("**Resume Score 📝**")
+           
+            
+            st.markdown('''<h4 style='text-align:center;margin-bottom:20px;font-family:Bungee;font-style:underline; margin-top:30px; font-size:50px; color: #080506; background-color:#a99a86;letter-spacing:5px'>  Resume Score Evaluation 📝''',unsafe_allow_html=True)
+
+            
+            
                 
             st.markdown(
                     """
@@ -665,7 +704,7 @@ def NormalUser():
 
      
             st.success('** Your Resume Writing Score: ' + str(score)+'**')
-            st.warning("** Note: This score is calculated based on the content that you have added in your Resume. **")
+            #st.warning("** Note: This score is calculated based on the content that you have added in your Resume. **")
             ts = time.time()
             cur_date = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
             cur_time = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
@@ -688,7 +727,8 @@ def NormalUser():
             "Leadership/Volunteer": "[+] Awesome! You have added Leadership/Volunteer" if leadership_volunteer_pattern.search(resume_text) else "[-] Please add Leadership/Volunteer. It will show your Leadership & Management skills to the company.",
         }
 
-            
+
+               
             if st.button("Download Resume Report"):
                 pdf_report = generate_pdf_report(
                     resume_data,

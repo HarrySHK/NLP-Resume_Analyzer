@@ -29,7 +29,10 @@ def main():
         default_index=0,
         orientation="horizontal",)
     
-    st.title("AI Resume Analyser")
+    #st.title("AI Resume Analyser")
+    
+    st.markdown('''<h4 style='padding:15px;text-align:center;margin-bottom:20px;font-family:Fantasy;font-style:underline; margin-top:30px; font-size:80px; color: #771414; background-color:#d5d3d3;letter-spacing:5px'>WSH Resume Analyser  💻''',unsafe_allow_html=True)
+
    
     ###### Code for client side (USER) ######
 
