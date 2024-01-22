@@ -10,6 +10,10 @@ from admin import AdminUser
 from selection_tool import Selection_Tool
 from about import About
 
+import spacy
+
+nlp = spacy.load('en_core_web_sm')
+
 
 ###### Main function run() ######
 def main():
