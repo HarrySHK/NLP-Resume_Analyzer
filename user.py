@@ -133,9 +133,9 @@ def generate_pdf_report(resume_data, resume_score, cand_level, clf, current_skil
 
     # Convert current_skills list to a string
     current_skills_str = ', '.join(current_skills)
-    p.drawString(100, 610, "Current Skills: " + current_skills_str)
-    p.drawString(100, 590, "Recommended Skills: " + ', '.join(recommended_skills))
-    p.drawString(100, 570, "Recommended Courses: " + ", ".join(recommended_courses))
+    # p.drawString(100, 610, "Current Skills: " + current_skills_str)
+    # p.drawString(100, 590, "Recommended Skills: " + ', '.join(recommended_skills))
+    # p.drawString(100, 570, "Recommended Courses: " + ", ".join(recommended_courses))
     p.drawString(100, 550, "Tips and Ideas:")
 
     # Add Tips and Ideas from the provided dictionary
