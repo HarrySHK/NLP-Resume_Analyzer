@@ -1,16 +1,9 @@
-# Implementing the database
-
-import pymongo
-
-
-import spacy
-
-nlp = spacy.load('en_core_web_sm')
-
 import re
 import json
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+import pymongo
 
 ###### Import Libraries ######
 import nltk
@@ -29,6 +22,9 @@ from pdfminer3.pdfpage import PDFPage
 from pdfminer3.pdfinterp import PDFResourceManager
 from pdfminer3.pdfinterp import PDFPageInterpreter
 from pdfminer3.converter import TextConverter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+import textwrap 
 
 ###### Import Courses and  Database File ######
 
@@ -42,35 +38,6 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import CountVectorizer
 
 
-def convert_pdf_to_txt(pdf_file):
-    resource_manager = PDFResourceManager()
-    fake_file_handle = io.StringIO()
-    converter = TextConverter(resource_manager, fake_file_handle, laparams=LAParams())
-    page_interpreter = PDFPageInterpreter(resource_manager, converter)
-    for page in PDFPage.get_pages(pdf_file):
-        page_interpreter.process_page(page)
-    text = fake_file_handle.getvalue()
-    converter.close()
-    fake_file_handle.close()
-    return text
-
-def course_recommender(course_list):
-    st.subheader("\n\n**Courses & Certificates Recommendations 👨‍🎓**")
-    c = 0
-    rec_course = []
-    ## slider to choose from range 1-10
-    no_of_reco =5
-    random.shuffle(course_list)
-    for c_name, c_link in course_list:
-        c += 1
-        st.markdown(f"({c}) [{c_name}]({c_link})")
-        rec_course.append(c_name)
-        if c == no_of_reco:
-            break
-    return rec_course
-
-
-# Putting Data in MongoDb
 
 def store_resumedata_in_mongodb(name, email, mobile_number, job_title,score, experience,timestamp, mongodb_connection_string):
     # Connect to MongoDB
@@ -108,7 +75,84 @@ def store_resumedata_in_mongodb(name, email, mobile_number, job_title,score, exp
 
 
 
+def convert_pdf_to_txt(pdf_file):
+    resource_manager = PDFResourceManager()
+    fake_file_handle = io.StringIO()
+    converter = TextConverter(resource_manager, fake_file_handle, laparams=LAParams())
+    page_interpreter = PDFPageInterpreter(resource_manager, converter)
+    for page in PDFPage.get_pages(pdf_file):
+        page_interpreter.process_page(page)
+    text = fake_file_handle.getvalue()
+    converter.close()
+    fake_file_handle.close()
+    return text
 
+def course_recommender(course_list):
+    st.subheader("\n\n**Courses & Certificates Recommendations 👨‍🎓**")
+    c = 0
+    rec_course = []
+    ## slider to choose from range 1-10
+    no_of_reco =5
+    random.shuffle(course_list)
+    for c_name, c_link in course_list:
+        c += 1
+        st.markdown(f"({c}) [{c_name}]({c_link})")
+        rec_course.append(c_name)
+        if c == no_of_reco:
+            break
+    return rec_course
+
+
+# def NormalUser():
+#     pdf_file = st.file_uploader("Choose your Resume", type=['pdf'])
+#     if pdf_file is not None:
+#         with st.spinner('Hang On While We Cook Magic For You...'):
+#             time.sleep(3)
+#         file_bytes = base64.b64encode(pdf_file.read()).decode()
+#         #st.write(f'<iframe src="data:application/pdf;base64,{file_bytes}" width="600" height="900"></iframe>', unsafe_allow_html=True)
+#         resume_text = convert_pdf_to_txt(pdf_file)
+#         resume_data = ResumeParser(pdf_file).get_extracted_data()
+#         if resume_data:
+#             st.header("**Resume Analysis ✉️**")
+#             st.success("Hello "+ resume_data['name'])
+#             st.subheader("**Your Basic info 📋**")
+
+
+def generate_pdf_report(resume_data, resume_score, cand_level, clf, current_skills, recommended_skills, recommended_courses, resume_tips):
+    buffer = io.BytesIO()
+
+    # Create PDF
+    p = canvas.Canvas(buffer, pagesize=letter)
+    p.drawString(100, 750, "Resume Report")
+    p.drawString(100, 730, "Name: " + resume_data['name'])
+    p.drawString(100, 710, "Email: " + resume_data['email'])
+    p.drawString(100, 690, "Contact: " + resume_data['mobile_number'])
+    p.drawString(100, 670, "Resume Score: " + str(resume_score))
+    p.drawString(100, 650, "Experience Level: " + cand_level)
+    p.drawString(100, 630, "Predicted Job Title: " + clf)
+
+    # Convert current_skills list to a string
+    current_skills_str = ', '.join(current_skills)
+    p.drawString(100, 610, "Current Skills: " + current_skills_str)
+    p.drawString(100, 590, "Recommended Skills: " + ', '.join(recommended_skills))
+    p.drawString(100, 570, "Recommended Courses: " + ", ".join(recommended_courses))
+    p.drawString(100, 550, "Tips and Ideas:")
+
+    # Add Tips and Ideas from the provided dictionary
+    y_position = 530  # Starting y-position for tips
+    for tip_category, tip_content in resume_tips.items():
+        # Adjust x-position and line wrapping
+        lines = textwrap.wrap(f"{tip_category}: {tip_content}", width=80)
+        for line in lines:
+            p.drawString(120, y_position, line)
+            y_position -= 15  # Adjust this value as needed to space out the lines
+
+    # Add more information to the PDF as needed
+
+    p.save()
+
+    buffer.seek(0)
+    return buffer
 
 
 def NormalUser():
@@ -629,6 +673,36 @@ def NormalUser():
             
             insert_data(resume_data['name'],resume_data['email'],resume_data['mobile_number'],str(resume_score),
                         str(cand_level),clf,str(resume_data['skills']),timestamp)
+            
+            resume_tips = {
+            "Education": "[+] Awesome! You have added Education Details" if education_pattern.search(resume_text) else "[-] Please add Education. It will give Your Qualification level to the recruiter",
+            "Experience": "[+] Awesome! You have added Experience" if experience_pattern.search(resume_text) else "[-] Please add Experience. It will help you to stand out from the crowd",
+            "Internships": "[+] Awesome! You have added Internships" if internship_pattern.search(resume_text) else "[-] Please add Internships. It will help you to stand out from the crowd",
+            "Skills": "[+] Awesome! You have added Skills" if skills_pattern.search(resume_text) else "[-] Please add Skills. It will help you a lot",
+            "Projects": "[+] Awesome! You have added your Projects" if projects_pattern.search(resume_text) else "[-] Please add Projects. It will show that you have done work related to the required position or not.",
+            "Hobbies/Interests": "[+] Awesome! You have added your Hobbies/Interests" if hobbies_pattern.search(resume_text) else "[-] Please add Hobbies/Interests. It will show your personality to the Recruiters and give the assurance that you are fit for this role or not.",
+            "Achievements": "[+] Awesome! You have added your Achievements" if achievements_pattern.search(resume_text) else "[-] Please add Achievements. It will show that you are capable of the required position.",
+            "Certifications": "[+] Awesome! You have added your Certifications" if certifications_pattern.search(resume_text) else "[-] Please add Certifications. It will show that you have done some specialization for the required position.",
+            "Languages": "[+] Awesome! You have added your Languages" if languages_pattern.search(resume_text) else "[-] Please mention Languages you know. It will show that you have different communication skills.",
+            "Summary/Objective": "[+] Awesome! You have added your Summary/Objective" if summary_objective_pattern.search(resume_text) else "[-] Please add Summary/Objective. It will show your single-word presentation to the company.",
+            "Leadership/Volunteer": "[+] Awesome! You have added Leadership/Volunteer" if leadership_volunteer_pattern.search(resume_text) else "[-] Please add Leadership/Volunteer. It will show your Leadership & Management skills to the company.",
+        }
+
+            
+            if st.button("Download Resume Report"):
+                pdf_report = generate_pdf_report(
+                    resume_data,
+                    resume_score,
+                    cand_level,
+                    clf,
+                    resume_data['skills'],
+                    recommended_skills,
+                    rec_course,
+                    resume_tips
+                )
+                b64 = base64.b64encode(pdf_report.read()).decode()
+                href = f'<a href="data:application/pdf;base64,{b64}" download="Resume_Report.pdf">Download Resume Report</a>'
+                st.markdown(href, unsafe_allow_html=True)
            
             
             st.text("\n\n\n")
